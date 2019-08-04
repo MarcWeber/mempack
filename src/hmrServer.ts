@@ -1,23 +1,20 @@
-import { Server } from 'ws';
+import { Server } from "ws";
+import { log } from "./log";
+
 export interface ISocketClientInterface {
-  onMessage?: (fn: (name: string, payload) => void) => void;
-  sendEvent(name: string, payload?);
+  onMessage?: (fn: (name: string, payload: any) => void) => void;
+  sendEvent(name: string, payload?: any): any;
 }
 // keep that in mind:
 // https://github.com/elsassph/react-hmr-ts/tree/master/examples/fuse-box
 
-export function createClient(client): ISocketClientInterface {
-  return {
-    sendEvent(name: string, payload?) {
-      client.send(JSON.stringify({ name, payload }));
-    },
-  };
-}
 export type HMRServerMethods = ISocketClientInterface & {};
 export interface ICreateHMRServerProps {
   internalServer?: any;
-  port?:number
+  port?: number
 }
+
+export type Listener = (name: string, payload: any) => void
 
 export function createHMRServer(props: ICreateHMRServerProps): HMRServerMethods {
   const serverOpts: any = {};
@@ -28,30 +25,34 @@ export function createHMRServer(props: ICreateHMRServerProps): HMRServerMethods 
   }
   const wss = new Server(serverOpts);
   const clients = new Set<ISocketClientInterface>();
-  const scope = {
+  const scope: {listeners: Listener[]} = {
     listeners: [],
   };
-  console.log(`<dim>HMR server is running on port ${props.port}</dim>`);
-  wss.on('connection', function connection(ws) {
-    const client = createClient(ws);
+  log(`<dim>HMR server is running on port ${props.port}</dim>`);
+  wss.on("connection", function connection(ws) {
+    const client = {
+      sendEvent(name: string, payload?: any) {
+        ws.send(JSON.stringify({ name, payload }));
+      },
+    }
     clients.add(client);
-    ws.on('close', () => {
+    ws.on("close", () => {
       clients.delete(client);
     });
-    ws.on('message', function incoming(data) {
+    ws.on("message", function incoming(data) {
       const json = JSON.parse(data as string); // FIXME TYPING as string
-      scope.listeners.forEach(fn => {
+      scope.listeners.forEach((fn: any) => {
         fn(json.name, json.payload);
       });
     });
   });
 
   return {
-    onMessage: (fn: (name: string, payload) => void) => {
+    onMessage: (fn: Listener) => {
       scope.listeners.push(fn);
     },
     sendEvent: (name: string, payload?) => {
-      clients.forEach(client => client.sendEvent(name, payload));
+      clients.forEach((client) => client.sendEvent(name, payload));
     },
   };
 }

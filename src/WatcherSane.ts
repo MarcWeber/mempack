@@ -2,7 +2,8 @@ import * as fs from "fs"
 import * as path from "path"
 import sane from "sane"
 import { textSpanContainsPosition } from "typescript";
-import { force_absolute } from "./Util";
+import { log } from "./log";
+import { force_absolute, path_walk_till } from "./Util";
 
 /*
 using $HOME will cause 50% CPU utilization on my machine
@@ -30,35 +31,6 @@ const unwatch = (watched: Watched, thing: string, f: () => void) => {
     }
 }
 
-// watching each directory cannot be done, because its too slow.
-// thus find sane base diretories eg containing node_modules .. to watch
-// this only has to be good enough ..
-// TODO: simplify, no caching required
-const sane_base_dir = () => {
-    const exists_cache: {[key: string]: boolean} = {}
-    const existsSync = (p: string) => {
-        if (!(p in exists_cache)) exists_cache[p] = fs.existsSync(p)
-        return exists_cache[p]
-    }
-    const contains = (file: string) => (dir: string) => (existsSync(path.join(dir, file)))
-    const basedirs: string[] = []
-
-    const basedir_indicators = [".svn", ".git", "node_modules", "src", "package.json", "tsmono.json"].map((x) => contains(x))
-    return (po: string): string => {
-        let p = po
-        const found = basedirs.find((x) => p.startsWith(x))
-        if (found) return found; // if we already are watching a basedir .. use that
-        while (!["/", "."].includes(p)) {
-            if (basedir_indicators.find((x) => x(p))) {
-                basedirs.push(p)
-                return p
-            }
-            p = path.dirname(p)
-        }
-        throw new Error(`no basedir found for ${po}`)
-    }
-}
-
 const basedirs = <Thing extends string, PerBasedir>(opts: {
     new_per_basedir: (path: string) => PerBasedir,
     add_thing_to_basedir: (t: Thing, p: PerBasedir) => void,
@@ -79,7 +51,6 @@ const basedirs = <Thing extends string, PerBasedir>(opts: {
         },
         add : (path: Thing) => {
             force_absolute(path)
-            console.log("basedirs watched", Object.keys(by_basedir))
             const basedir = Object.keys(by_basedir).find((x) => path.startsWith(x))
             if (basedir) {
                 opts.add_thing_to_basedir(path, by_basedir[basedir])
@@ -87,6 +58,7 @@ const basedirs = <Thing extends string, PerBasedir>(opts: {
             }
             const new_basedir = opts.basedir(path)
             by_basedir[new_basedir] = opts.new_per_basedir(new_basedir)
+            log(`adding thing ${path} to basedir ${new_basedir}`)
             opts.add_thing_to_basedir(path, by_basedir[new_basedir])
             for (const obsolete of Object.keys(by_basedir).filter((x) => x.startsWith(new_basedir))) {
                 if (obsolete === new_basedir) continue;
@@ -113,7 +85,6 @@ export class Watcher {
     constructor(public globalWacher ?: GlobalWatcher) {
         this.watched = {}
         this.watchers = []
-        // watcher.on("ready", () => { console.log("ready") });
 
         this.by_basedir = basedirs<string, {
             watched_paths: {[key: string]: number},
@@ -125,8 +96,10 @@ export class Watcher {
 
                 const changed = (type: string, thing: string) => {
                     const a = path.join(basedir, thing)
-                    if (a in watched_paths)
+                    if (a in watched_paths) {
+                        log(`changed file ${a}`)
                         this.watchers.forEach((x) => x(a, type))
+                    }
                 }
                 s.on("change", (filepath: any, root: any, stat: any) => { changed("change", filepath) });
                 s.on("add", (filepath: any, root: any, stat: any) => { changed("add", filepath) });
@@ -159,25 +132,25 @@ export class Watcher {
             destroy_per_basedir: (path, p) => {
                 p.sane.close()
             },
-            basedir: sane_base_dir(),
+            basedir: path_walk_till(),
         })
         this.watchers = []
     }
     public watch(thing: string) {
         watch(this.watched, thing, () => {
-            console.log("WATCH WatcherSane", thing)
+            log(`WacherSane starting to watch ${thing}`)
             this.by_basedir.add(thing)
         })
     }
     public unwatch(thing: string) {
         unwatch(this.watched, thing, () => {
+            log(`WacherSane stopping watching ${thing}`)
             this.by_basedir.remove(thing)
         })
     }
 
     public close() {
         this.by_basedir.destroy()
-        console.log("WATCH CLOS")
         this.watched = {}
         if (this.globalWacher) this.globalWacher.removeWatcher(this)
     }
