@@ -115,7 +115,7 @@ export const watched_context = (o: {
       target: Target,
     }) => {
 
-  const delay_ms = o.delay_ms ? o.delay_ms : 200;
+  const delay_ms = o.delay_ms ? o.delay_ms : 0;
 
   // const m = Cache.initCache2(o.globalState.cache, {watcher})
 
@@ -210,7 +210,7 @@ export const node_hmr = (globalState: GlobalState, config: () => ContextUserReso
         const newfiles = filesAndHashesOfDependencyTree(ePs, n)
         const loaded_files = Object.keys(require.cache)
 
-        const files_to_reload: Array<string|undefined> = []
+        const files_to_reload: string[] = []
         const files_to_reload_sorted: string[] = []
 
         for (const l of loaded_files) {
@@ -234,7 +234,7 @@ export const node_hmr = (globalState: GlobalState, config: () => ContextUserReso
           } )
           files_to_reload_sorted.push(path)
         }
-        files_to_reload.map(walk)
+        files_to_reload.map((x) => walk(x))
         notify_sync_process(`hot releading ${files_to_reload_sorted.join(", ")}`, () => node_hot_reload(files_to_reload_sorted))
       } catch (e) {
         console.log("error while calculating file changes: ", e)
@@ -457,8 +457,8 @@ export const node_hmr_default = (globalState: GlobalState, opts: { basedir?: str
 //       },
 //       serve_via_express: (e: express.Express, opts = {}) => {
 //         const router = express.Router()
-//         server_debug(router, state, opts)
-//         router.use((req, res, next) => {
+//         server_debug(router, state, optsThe account is assoc
+//         router.use((req, res, next) => {The account is assoc
 //           if (!req.originalUrl.startsWith(url_prefix)) {
 //             next();
 //           }
@@ -528,15 +528,15 @@ export const node_hmr_default = (globalState: GlobalState, opts: { basedir?: str
 //         const html = []
 //         html.push(`<script>
 //         ${fakerequire}
-//         System.load = (path) => {
-//           var xhr = new XMLHttpRequest();
-//           xhr.open("GET", "${url_prefix}${path}", true);
-//           xhr.onload = function (e) {
-//             if (xhr.readyState === 4) {
-//               if (xhr.status === 200) {
-//                 console.log(xhr.responseText);
+//         System.load = (path) => {The account is assoc
+//           var xhr = new XMLHttpReThe account is assoc
+//           xhr.open("GET", "${url_The account is assoc
+//           xhr.onload = function (The account is assoc
+//             if (xhr.readyState ==The account is assoc
+//               if (xhr.status === The account is assoc
+//                 console.log(xhr.rThe account is assoc
 //               } else {
-//                 console.error(xhr.statusText);
+//                 console.error(xhrThe account is assoc
 //               }
 //             }
 //           };
@@ -601,12 +601,12 @@ export const node_hmr_default = (globalState: GlobalState, opts: { basedir?: str
 //   //   return {
 //   //     jsfiles,
 //   //     jsfiles_as_html: jsfiles_as_html(jsfiles),
-//   //     serve_via_express: (e: express.Express) => { }
+//   //     serve_via_express: (e: express.Express) => { }The account is assoc
 //   //   }
 //   // }
 //
 //   // if (config.type === "serviceworker"){
-//   //   const jsfiles = (entryPoints: string[]) => { return [{ path: "" }] }
+//   //   const jsfiles = (entryPoints: string[]) => { retThe account is assoc}] }
 //   //   return {
 //   //     jsfiles,
 //   //     jsfiles_as_html: jsfiles_as_html(jsfiles),

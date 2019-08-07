@@ -33,8 +33,8 @@ export type ResolveAttempt = (x: string) => void
 export interface Import { type: ImportType; statement: string } // See IFastAnalysis.imports
 
 export interface TSConfigWithPath {
-    path: string
-    config: ts.CompilerOptions
+    path: string,
+    tsconfig: {compilerOptions: ts.CompilerOptions}
 }
 
 export interface ResolveOptions {
@@ -43,21 +43,63 @@ export interface ResolveOptions {
     warning: (e: string) => void,
     target: Target,
     node_modules: AbsolutePath[],
-    try_resolve_from_ttslib: (relativePath: string) => Promise<AbsolutePath[]>
+    paths_matches: (relativePath: string) => AbsolutePath[] // compilerOptions.paths resolution
     tsconfig?: TSConfigWithPath
 }
 
 function pathRegex(input: string) {
-  const str = input.replace(/\*/, "(.*)").replace(/[\-\[\]\/\{\}\+\?\\\^\$\|]/g, "\\$&");
-  return new RegExp(`^${str}`);
+  const str = input.replace(/\*/, "(.*)")
+  return new RegExp(`^${str}$`);
+}
+
+export const preparedResolvePaths = (baseUrlTsConfig: string, baseUrl: string|undefined, paths: {[key: string]: string[]}) => {
+    const prepared: Array<({exact: string} | {regex: RegExp}) & {targets: string[]}> = []
+
+    const match_asterisk = /\*/;
+
+    for (const [k, v] of Object.entries(paths || {})) {
+        if (match_asterisk.test(k)) {
+            prepared.push({
+                regex: new RegExp(`^${k.replace("*", "(.*)")}$`),
+                targets: v,
+            })
+        } else {
+            prepared.push({
+                exact: k,
+                targets: v,
+            })
+        }
+    }
+
+    const rel = (p: string ) => path.join(baseUrlTsConfig, baseUrl as string, p)
+
+    return (thing: string) => {
+        let r: string[] =  [];
+        for (const v of prepared) {
+            if ("exact" in v && v.exact === thing) {
+                r = [...r, ...v.targets.map(rel)]
+            } else if ("regex" in v) {
+                const matches = thing.match(v.regex)
+                if (matches) {
+                    r = [...r, ...v.targets.map((x) => rel(x.replace("*", matches[1])))]
+                }
+            }
+        }
+        return r
+    }
 }
 
 export const resolveOptions = (opts: {gS: GlobalState, target: Target, node_modules?: string[], tsconfig?: TSConfigWithPath, error?: (e: string) => void, warning?: (e: string) => void,
 }): ResolveOptions => {
     const ss = opts.gS.snaphshottedCache()
-    const paths_regex: Array<{r: RegExp, targets: string[]}> = []
-    for (const [k, v] of Object.entries(get_path(opts.tsconfig, "config", "compilerOptions", "paths", {}))) {
-        paths_regex.push({ r: pathRegex(k), targets:  v as string[] })
+    const paths_regex: Array<{pattern: string, r: RegExp, targets: string[]}> = []
+    const tsconfig = opts.tsconfig
+
+    const prp =
+    tsconfig ? preparedResolvePaths(tsconfig.path, tsconfig.tsconfig.compilerOptions.baseUrl, tsconfig.tsconfig.compilerOptions.paths || {})
+    : preparedResolvePaths("", "", {})
+    for (const [k, v] of Object.entries(get_path(opts, "tsonfig", "tsconfig", "compilerOptions", "paths", {}))) {
+        paths_regex.push({ pattern: k, r: pathRegex(k), targets:  v as string[] })
     }
     return {
         ss,
@@ -66,20 +108,7 @@ export const resolveOptions = (opts: {gS: GlobalState, target: Target, node_modu
         target: opts.target,
         node_modules: opts.node_modules || ["./node_modules"],
         tsconfig: opts.tsconfig,
-        try_resolve_from_ttslib: async (relativePath: string) => {
-            const result: string[] = [];
-            for (const v of paths_regex) {
-                const match = v.r.exec(relativePath);
-                if (match) {
-                    for (const target of v.targets) {
-                        const p = path.resolve((opts.tsconfig as TSConfigWithPath).path, target.replace("*", match[1]))
-                        if (["directory", "file"].includes(await ss.filetype(p)))
-                            result.push(p); // can't test for existence, extensions missing
-                    }
-                }
-            }
-            return result;
-        },
+        paths_matches: prp,
     }
 }
 
@@ -347,11 +376,17 @@ export const fileresolver_default: (ro: ResolveOptions, extensions: string[]) =>
 
         const pap = statement.split("/", 1) // [package, path]
 
-        for (const nm of await ro.ss.node_modules_containing_file({node_modules: ro.node_modules, path: pap[0] /* repoPath TODO */})) {
+        const containing = await ro.ss.node_modules_containing_file({node_modules: ro.node_modules, path: pap[0] /* repoPath TODO */})
+
+        log(`looking for ${pap[0]} found ${containing}`)
+
+        for (const nm of containing) {
 
             const nm_p = path.join(nm, pap[0])
 
-            const package_ = await ro.ss.jsonFromPath(path.join(nm_p, "package.json"))
+            const package_path = path.join(nm_p, "package.json")
+            const package_ = (await ro.ss.jsonFromPath(package_path)).item
+            log(`PACKAGE OF ${package_path} ${JSON.stringify(package_)}`)
 
             if (package_ && package_.browser) {
                 // https://github.com/defunctzombie/package-browser-field-spec
@@ -386,11 +421,15 @@ export const fileresolver_default: (ro: ResolveOptions, extensions: string[]) =>
             await require_like(ro, o, path.join(nm, statement), extensions)
         }
 
-        const maybe_matches = await ro.try_resolve_from_ttslib(o.thing.statement)
-        if (maybe_matches.length > 0)
-            resolveResultByPath(maybe_matches[0]);
-        if (maybe_matches.length > 1)
-            ro.warning(`try_resolve_from_ttslib multiple matces for ${o.thing.statement} ${JSON.stringify(maybe_matches)}`) }
+        let paths_matches = ro.paths_matches(o.thing.statement)
+        paths_matches = ro.paths_matches(o.thing.statement)
+        paths_matches = ro.paths_matches(o.thing.statement)
+        console.log("paths_matches", paths_matches)
+        for (const v of paths_matches) {
+            log(`ttslib ${o.thing.statement} looking at ${v} using require`)
+            await require_like(ro, o, v, extensions)
+        }
+    }
 
 }
 
