@@ -2,19 +2,18 @@ import * as Bluebird from "bluebird"
 import chalk from "chalk";
 import express, { Router } from "express";
 import * as fs from "fs";
-import { fileStat } from "fuse-box/utils/utils";
 import JSON5 from "json5";
 import path from "path";
-import { js_setup_service_worker } from "ttslib/serviceworker";
-import { async_singleton } from "ttslib/U";
 import ts, { createTextChangeRange, getParsedCommandLineOfConfigFile } from "typescript";
 import * as _ from "underscore"
 import { promisify } from "util";
-import { defaultResolveImplementation, dependencies, Dependencies, DependencyTree, filesAndHashesOfDependencyTree, ResolveOptions, resolveOptions, Target } from "./dependencies";
+import ws from "ws"
+import { defaultResolveImplementation, dependencies, Dependencies, DependencyTree, filesAndHashesOfDependencyTree, ResolveOptions, resolveOptions, Target, TSConfigWithPath } from "./dependencies";
 import { p } from "./dummy";
 import { fakerequire } from "./fakerequire";
 import { GlobalState } from "./GlobalState";
 import { createHMRServer } from "./hmrServer";
+import { js_setup_service_worker } from "./js_setup_sorviceworker";
 import { log } from "./log";
 import { NormalizedDependencyResult } from "./normalizeddependencies";
 import { node_hot_reload, notify_sync_process, path_walk_till } from "./Util";
@@ -43,10 +42,7 @@ export interface ContextUserResolved {
   node_modules: string[],
   entryPoints: string[],
   target: Target,
-  tsconfig: {
-    path: string
-    config: ts.CompilerOptions,
-  },
+  tsconfig: TSConfigWithPath
 }
 
 // function turning ContextUser -> ContextResolved
@@ -57,22 +53,22 @@ export const resolveContext: (f: () => ContextUser) => () => ContextUserResolved
   const c: ContextUser = f()
 
   const p: string = c.path ? make_absolute(c.path) : process.cwd()
-  const tsconfig = c.tsconfig
+  const tsconfig: TSConfigWithPath = c.tsconfig
     ? (
       (typeof c.tsconfig === "string")
       ? {
           path: make_absolute(path.dirname(c.tsconfig)),
-          config: JSON5.parse(fs.readFileSync(c.tsconfig, "utf8")),
+          tsconfig: JSON5.parse(fs.readFileSync(c.tsconfig, "utf8")),
       }
       : {
         path: c.tsconfig && c.tsconfig.path ? make_absolute(c.tsconfig.path) : p,
-        config: c.tsconfig ? c.tsconfig.config : {},
+        tsconfig: c.tsconfig ? c.tsconfig.config : {},
       }
     )
     : // default
     {
       path: p,
-      config: { },
+      tsconfig: { },
     }
 
   const r = {
@@ -98,6 +94,7 @@ const emitHandlerDist = (opts: {dist:string, rimraf: boolean}) =>
     }
     if (event.type == "file"){
       fs.writeFileSync(path.join("dist", event.path), event.content, 'utf8')
+import { async_singleton } from "ttslib/U";
     }
   }
 */
@@ -115,7 +112,7 @@ export const watched_context = (o: {
       target: Target,
     }) => {
 
-  const delay_ms = o.delay_ms ? o.delay_ms : 0;
+  const delay_ms = o.delay_ms ? o.delay_ms : 180;
 
   // const m = Cache.initCache2(o.globalState.cache, {watcher})
 
@@ -202,8 +199,6 @@ export const node_hmr = (globalState: GlobalState, config: () => ContextUserReso
 
         await new_last.last.resolveDependencies(ePs)
         await new_last.new_.resolveDependencies(ePs)
-        await new_last.last.resolveDependencies(ePs)
-        await new_last.new_.resolveDependencies(ePs)
 
         const [o, n] = await Promise.all([new_last.last.resolveDependencies(ePs), new_last.new_.resolveDependencies(ePs)])
         const oldfiles = filesAndHashesOfDependencyTree(ePs, o)
@@ -263,6 +258,90 @@ export const node_hmr_default = (globalState: GlobalState, opts: { basedir?: str
       };
     }),
   )
+}
+
+export type ClientServiceConfig =
+  {implementation: "modules"} // no hmr, experimental
+  |
+  { // for development (life update)
+      implementation: "service_worker",
+      bundledescription_by: "serviceworker" | "socket",
+      context: () => ContextUser,
+      socket_port?: number,
+
+      corksize?: number,
+      file_split_size?: number,
+      force_flush_after_ms?: number,
+
+      // serviceworker will be faster for production
+      // socket will be faster for development (because service worker can be
+      // served and loaded while bundle is created ?
+      // TODO: is it true
+      //
+      // TODO: finish implementation and write documentation
+  }
+  |
+  {
+      // no service worker
+      implementation: "client",
+  }
+  |
+  {
+      // no service worker
+      implementation: "modules",
+  }
+
+export interface ExpressSetup {
+    js_tag_for_page_header: string,
+    setup_express: (express: express.Express) => void,
+}
+
+export const client_service_worker: (globalState: GlobalState) => (config: ClientServiceConfig) => ExpressSetup =
+     (gS) => (config) => {
+
+    if (config.implementation === "service_worker") {
+
+      const corksize = config.corksize || 1200;
+      const file_split_size = config.file_split_size || 1200;
+      const force_flush_after_ms = config.force_flush_after_ms || 30;
+
+      const expressWebSocket = require("express-ws").default;
+      const websocketStream = require("websocket-stream/stream").default;
+
+      const socket_path = "/sw-socket"
+
+      // service worker implementation
+      const router = express.Router()
+      router.use((req, res, next) => {
+         })
+      return {
+             js_tag_for_page_header: "",
+             setup_express: (app) => {
+               expressWebSocket(app, null, {
+                 perMessageDeflate: false,
+               })
+               // @ts-ignore
+               app.ws(socket_path, (ws, req) => {
+                 const flush_timer: number|undefined = undefined
+                 const tobesent: Array<{id: string, stream: any, prio: number}> = []
+                 const stream = websocketStream(ws, {
+                   // websocket-stream options here
+                   // TODO: set writableHighWaterMark to low value ?
+                   binary: true,
+                 });
+                 stream.on("data", (m) => console.log("stream got message", m) )
+                 stream.on("close", () => console.log("stream closed"))
+               })
+             },
+         }
+    } else if (config.implementation === "client") {
+        // browser without service worker
+        throw new Error("TODO")
+    } else if (config.implementation === "modules") {
+        // es6 module like implemenation
+        // TODO, get from comments below ..
+        throw new Error("TODO")
+    } else throw new Error(`unknown implementation ${config.implemeentation}`)
 }
 
 // // CLIENT SIDE IMPLEMENTATION

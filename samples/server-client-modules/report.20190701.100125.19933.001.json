@@ -1,0 +1,326 @@
+
+{
+  "header": {
+    "event": "Allocation failed - JavaScript heap out of memory",
+    "trigger": "FatalError",
+    "filename": "report.20190701.100125.19933.001.json",
+    "dumpEventTime": "2019-07-01T10:01:25Z",
+    "dumpEventTimeStamp": "1561968085196",
+    "processId": 19933,
+    "commandLine": [
+      "node",
+      "-r",
+      "tsconfig-paths/register",
+      "-r",
+      "ts-node/register/transpile-only",
+      "server.ts"
+    ],
+    "nodejsVersion": "v11.11.0",
+    "glibcVersionRuntime": "2.27",
+    "glibcVersionCompiler": "2.27",
+    "wordSize": 64,
+    "arch": "x64",
+    "platform": "linux",
+    "componentVersions": {
+      "node": "11.11.0",
+      "v8": "7.0.276.38-node.18",
+      "uv": "1.26.0",
+      "zlib": "1.2.11",
+      "brotli": "1.0.7",
+      "ares": "1.15.0",
+      "modules": "67",
+      "nghttp2": "1.34.0",
+      "napi": "4",
+      "llhttp": "1.1.1",
+      "http_parser": "2.8.0",
+      "openssl": "1.1.1a",
+      "cldr": "34.0",
+      "icu": "63.1",
+      "tz": "2018e",
+      "unicode": "11.0"
+    },
+    "release": {
+      "name": "node",
+      "headersUrl": "https://nodejs.org/download/release/v11.11.0/node-v11.11.0-headers.tar.gz",
+      "sourceUrl": "https://nodejs.org/download/release/v11.11.0/node-v11.11.0.tar.gz"
+    },
+    "osName": "Linux",
+    "osRelease": "4.19.28",
+    "osVersion": "#1-NixOS SMP Sun Mar 10 06:17:22 UTC 2019",
+    "osMachine": "x86_64",
+    "host": "nixos"
+  },
+  "javascriptStack": {
+    "message": "No stack.",
+    "stack": [
+      "Unavailable."
+    ]
+  },
+  "nativeStack": [
+    {
+      "pc": "0x0000000000a7ea07",
+      "symbol": "report::TriggerNodeReport(v8::Isolate*, node::Environment*, char const*, char const*, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, v8::Local<v8::String>) [node]"
+    },
+    {
+      "pc": "0x000000000095ab53",
+      "symbol": "node::OnFatalError(char const*, char const*) [node]"
+    },
+    {
+      "pc": "0x0000000000b14822",
+      "symbol": "v8::Utils::ReportOOMFailure(v8::internal::Isolate*, char const*, bool) [node]"
+    },
+    {
+      "pc": "0x0000000000b14b78",
+      "symbol": "v8::internal::V8::FatalProcessOutOfMemory(v8::internal::Isolate*, char const*, bool) [node]"
+    },
+    {
+      "pc": "0x0000000000ef6302",
+      "symbol": " [node]"
+    },
+    {
+      "pc": "0x0000000000f09beb",
+      "symbol": "v8::internal::Heap::AllocateRawWithRetryOrFail(int, v8::internal::AllocationSpace, v8::internal::AllocationAlignment) [node]"
+    },
+    {
+      "pc": "0x0000000000ed59aa",
+      "symbol": "v8::internal::Factory::AllocateRawArray(int, v8::internal::PretenureFlag) [node]"
+    },
+    {
+      "pc": "0x0000000000ed5ea4",
+      "symbol": "v8::internal::Factory::NewFixedArrayWithFiller(v8::internal::Heap::RootListIndex, int, v8::internal::Object*, v8::internal::PretenureFlag) [node]"
+    },
+    {
+      "pc": "0x0000000000e8b250",
+      "symbol": " [node]"
+    },
+    {
+      "pc": "0x0000000001134d35",
+      "symbol": "v8::internal::Runtime_GrowArrayElements(int, v8::internal::Object**, v8::internal::Isolate*) [node]"
+    },
+    {
+      "pc": "0x000028ae5984fc5d",
+      "symbol": ""
+    }
+  ],
+  "javascriptHeap": {
+    "totalMemory": 1410744320,
+    "totalCommittedMemory": 1407707296,
+    "usedMemory": 1330740168,
+    "availableMemory": 117486864,
+    "memoryLimit": 1526909922,
+    "heapSpaces": {
+      "read_only_space": {
+        "memorySize": 524288,
+        "committedMemory": 42224,
+        "capacity": 515584,
+        "used": 33520,
+        "available": 482064
+      },
+      "new_space": {
+        "memorySize": 1048576,
+        "committedMemory": 17408,
+        "capacity": 1031168,
+        "used": 0,
+        "available": 1031168
+      },
+      "old_space": {
+        "memorySize": 743641088,
+        "committedMemory": 742389872,
+        "capacity": 680254016,
+        "used": 680254016,
+        "available": 0
+      },
+      "code_space": {
+        "memorySize": 2097152,
+        "committedMemory": 2002528,
+        "capacity": 1869120,
+        "used": 1869120,
+        "available": 0
+      },
+      "map_space": {
+        "memorySize": 14168064,
+        "committedMemory": 13990112,
+        "capacity": 1077840,
+        "used": 1077840,
+        "available": 0
+      },
+      "large_object_space": {
+        "memorySize": 649265152,
+        "committedMemory": 649265152,
+        "capacity": 763479304,
+        "used": 647505672,
+        "available": 115973632
+      },
+      "new_large_object_space": {
+        "memorySize": 0,
+        "committedMemory": 0,
+        "capacity": 0,
+        "used": 0,
+        "available": 0
+      }
+    }
+  },
+  "resourceUsage": {
+    "userCpuSeconds": 131.552,
+    "kernelCpuSeconds": 11.7824,
+    "cpuConsumptionPercent": 52.6964,
+    "maxRss": 1936424960,
+    "pageFaults": {
+      "IORequired": 0,
+      "IONotRequired": 3810676
+    },
+    "fsActivity": {
+      "reads": 0,
+      "writes": 64
+    }
+  },
+  "uvthreadResourceUsage": {
+    "userCpuSeconds": 65.9823,
+    "kernelCpuSeconds": 5.95444,
+    "cpuConsumptionPercent": 26.4473,
+    "fsActivity": {
+      "reads": 0,
+      "writes": 64
+    }
+  },
+  "libuv": [
+  ],
+  "environmentVariables": {
+    "__NIXOS_SET_ENVIRONMENT_DONE": "1",
+    "XDG_SEAT_PATH": "/org/freedesktop/DisplayManager/Seat0",
+    "__ETC_PROFILE_DONE": "1",
+    "TERMINFO_DIRS": "/run/current-system/sw/share/terminfo:/home/marc/.nix-profile/share/terminfo:/nix/var/nix/profiles/default/share/terminfo:/run/current-system/sw/share/terminfo:/etc/profiles/per-user/marc/share/terminfo",
+    "LOGNAME": "marc",
+    "SHELL": "zsh",
+    "PWD": "/pr/typescript/mempack/samples/server-client-modules",
+    "DBUS_SESSION_BUS_ADDRESS": "unix:abstract=/tmp/dbus-3XmULIbA2S,guid=b26306d876bb75dbf05364565d193adf",
+    "WMII_NS_DIR": "/tmp/ns.marc.:0",
+    "LIBEXEC_PATH": "/home/marc/.nix-profile/lib/libexec:/nix/var/nix/profiles/default/lib/libexec:/run/current-system/sw/lib/libexec:/etc/profiles/per-user/marc/lib/libexec",
+    "WMII_SELCOLORS": "#ffffff #335577 #447799",
+    "DESKTOP_SESSION": "plasma5+wmii",
+    "XDG_CONFIG_DIRS": "/home/marc/.nix-profile/etc/xdg:/nix/var/nix/profiles/default/etc/xdg:/run/current-system/sw/etc/xdg:/etc/profiles/per-user/marc/etc/xdg",
+    "WMII_NORMCOLORS": "#222222 #eeeeee #666666",
+    "GDMSESSION": "plasma5+wmii",
+    "MOZ_PLUGIN_PATH": "/home/marc/.nix-profile/lib/mozilla/plugins:/nix/var/nix/profiles/default/lib/mozilla/plugins:/run/current-system/sw/lib/mozilla/plugins:/etc/profiles/per-user/marc/lib/mozilla/plugins",
+    "XDG_RUNTIME_DIR": "/run/user/1008",
+    "NIX_PATH": "nixos=/etc/nixos/nixpkgs/nixos:nixpkgs=/etc/nixos/nixpkgs:nixos-config=/etc/nixos/configuration.nix",
+    "INFOPATH": "/home/marc/.nix-profile/info:/home/marc/.nix-profile/share/info:/nix/var/nix/profiles/default/info:/nix/var/nix/profiles/default/share/info:/run/current-system/sw/info:/run/current-system/sw/share/info:/etc/profiles/per-user/marc/info:/etc/profiles/per-user/marc/share/info",
+    "XDG_SEAT": "seat0",
+    "XCURSOR_PATH": "/home/marc/.icons:/home/marc/.nix-profile/share/icons:/nix/var/nix/profiles/default/share/icons:/run/current-system/sw/share/icons:/etc/profiles/per-user/marc/share/icons",
+    "__ETC_ZSHENV_SOURCED": "1",
+    "XDG_SESSION_TYPE": "x11",
+    "SSH_ASKPASS": "/nix/store/wzq71i2b03dggn24h7v2c4pnl60d0r10-ksshaskpass-5.14.5/bin/ksshaskpass",
+    "DISPLAY": ":0",
+    "HOME": "/home/marc",
+    "EDITOR": "vim",
+    "QTWEBKIT_PLUGIN_PATH": "/home/marc/.nix-profile/lib/mozilla/plugins/:/nix/var/nix/profiles/default/lib/mozilla/plugins/:/run/current-system/sw/lib/mozilla/plugins/:/etc/profiles/per-user/marc/lib/mozilla/plugins/",
+    "KDEDIRS": "/home/marc/.nix-profile:/nix/var/nix/profiles/default:/run/current-system/sw:/etc/profiles/per-user/marc",
+    "PAGER": "less -R",
+    "XDG_SESSION_DESKTOP": "plasma5+wmii",
+    "USER": "marc",
+    "NIX_USER_PROFILE_DIR": "/nix/var/nix/profiles/per-user/marc",
+    "GTK_PATH": "/home/marc/.nix-profile/lib/gtk-2.0:/home/marc/.nix-profile/lib/gtk-3.0:/nix/var/nix/profiles/default/lib/gtk-2.0:/nix/var/nix/profiles/default/lib/gtk-3.0:/run/current-system/sw/lib/gtk-2.0:/run/current-system/sw/lib/gtk-3.0:/etc/profiles/per-user/marc/lib/gtk-2.0:/etc/profiles/per-user/marc/lib/gtk-3.0",
+    "WMII_CONFPATH": "/home/marc/.wmii-3.5:/nix/store/l31ny1l6rnlpg41g9ws76dzignrgjh1k-wmii-3.6/etc/wmii-3.5",
+    "SHLVL": "3",
+    "XAUTHORITY": "/home/marc/.Xauthority",
+    "PAM_KWALLET5_LOGIN": "/run/user/1008/kwallet5.socket",
+    "WMII_FONT": "fixed",
+    "LOCALE_ARCHIVE": "/run/current-system/sw/lib/locale/locale-archive",
+    "TZDIR": "/etc/zoneinfo",
+    "XDG_VTNR": "7",
+    "XDG_SESSION_ID": "4",
+    "NIXPKGS_CONFIG": "/etc/nix/nixpkgs-config.nix",
+    "OLDPWD": "/pr/typescript/mempack",
+    "XDG_DATA_DIRS": "/run/opengl-driver/share:/run/opengl-driver-32/share:/home/marc/.nix-profile/share:/nix/var/nix/profiles/default/share:/run/current-system/sw/share:/etc/profiles/per-user/marc/share",
+    "GDK_PIXBUF_MODULE_FILE": "/nix/store/al9yvm83zlkjcrdfwggr4axc8wiqdxh5-gdk-pixbuf-loaders.cache",
+    "NO_AT_BRIDGE": "1",
+    "STRIGI_PLUGIN_PATH": "/home/marc/.nix-profile/lib/strigi/:/nix/var/nix/profiles/default/lib/strigi/:/run/current-system/sw/lib/strigi/:/etc/profiles/per-user/marc/lib/strigi/",
+    "LANG": "en_US.UTF-8",
+    "XDG_GREETER_DATA_DIR": "/var/lib/lightdm-data/marc",
+    "PATH": "/home/marc/.opam/default/bin:/home/marc/bin:/run/wrappers/bin:/home/marc/.nix-profile/bin:/nix/var/nix/profiles/default/bin:/run/current-system/sw/bin:/etc/profiles/per-user/marc/bin:/home/marc/mwr/ms/sh/:/home/marc/mwr/ms/php:/home/marc/gems/bin:/home/marc/managed_repos/nixpkgs-utilities/bin:/home/marc/managed_repos/ghcjs/dist/build/ghcjs:/home/marc/node_modules/iced-coffee-script/bin:/home/marc/node_modules/grunt-cli/bin:/home/marc/node_modules/node-inspector/bin:/home/marc/node_modules/less/bin:/home/marc/node_modules/css-purge/bin:/home/marc/node_modules/bower/bin:/home/marc/node_modules/.bin:/home/marc/.pub-cache/bin:/nix/store/bmcsm8g6n70dlcc1q74pdxp8ajdis6rv-idris-1.2.0/bin",
+    "TERM": "rxvt-unicode-256color",
+    "NIX_PROFILES": "/etc/profiles/per-user/marc /run/current-system/sw /nix/var/nix/profiles/default /home/marc/.nix-profile",
+    "LD_LIBRARY_PATH": "/run/opengl-driver/lib:/run/opengl-driver-32/lib:/home/marc/.nix-profile/lib/alsa-lib",
+    "QT_PLUGIN_PATH": "/home/marc/.nix-profile/lib/qt4/plugins:/home/marc/.nix-profile/lib/kde4/plugins:/nix/var/nix/profiles/default/lib/qt4/plugins:/nix/var/nix/profiles/default/lib/kde4/plugins:/run/current-system/sw/lib/qt4/plugins:/run/current-system/sw/lib/kde4/plugins:/etc/profiles/per-user/marc/lib/qt4/plugins:/etc/profiles/per-user/marc/lib/kde4/plugins",
+    "WMII_ADDRESS": "unix!/tmp/ns.marc.:0/wmii",
+    "XDG_SESSION_PATH": "/org/freedesktop/DisplayManager/Session0",
+    "_": "/run/current-system/sw/bin/node",
+    "WINDOWID": "44040208",
+    "COLORFGBG": "0;default;15",
+    "TERMINFO": "/home/marc/.nix-profile/share/terminfo",
+    "COLORTERM": "rxvt-xpm",
+    "SSH_AUTH_SOCK": "/tmp/ssh-fCtrlnPym2JJ/agent.1476",
+    "SSH_AGENT_PID": "1478",
+    "NIX_REMOTE": "daemon",
+    "NIXPKGS_ALL": "/etc/nixos/nixpkgs",
+    "PYTHONPATH": ":/home/marc/.nix-profile/lib/python2.7/site-packages",
+    "RUBYOPT": "rubygems",
+    "NIX_CONTINUE_DOWNLOADS": "1",
+    "NIX_REPOSITORY_MANAGER_REPO_DIR": "/home/marc/managed_repos",
+    "HXCPP": "/home/marc/haxe-lib/hxcpp/2,05,1",
+    "XML_CATALOG_FILES": "/home/marc/.nix-profile/xml/dtd/w3c-xhtml/catalog.xml",
+    "NIX_CONF_DIR": "/etc/nix",
+    "PYTHONUSERBASE": "/home/marc/.nix-profile",
+    "OPAM_SWITCH_PREFIX": "/home/marc/.opam/default",
+    "MANPATH": ":/home/marc/.opam/default/man",
+    "MAVEN_OPTS": "-Xms512M -Xmx1024M -Xss2M -XX:MaxMetaspaceSize=1024M"
+  },
+  "userLimits": {
+    "core_file_size_blocks": {
+      "soft": 0,
+      "hard": "unlimited"
+    },
+    "data_seg_size_kbytes": {
+      "soft": "unlimited",
+      "hard": "unlimited"
+    },
+    "file_size_blocks": {
+      "soft": "unlimited",
+      "hard": "unlimited"
+    },
+    "max_locked_memory_bytes": {
+      "soft": 256000000,
+      "hard": 256000000
+    },
+    "max_memory_size_kbytes": {
+      "soft": "unlimited",
+      "hard": "unlimited"
+    },
+    "open_files": {
+      "soft": 4096,
+      "hard": 4096
+    },
+    "stack_size_bytes": {
+      "soft": 8388608,
+      "hard": "unlimited"
+    },
+    "cpu_time_seconds": {
+      "soft": "unlimited",
+      "hard": "unlimited"
+    },
+    "max_user_processes": {
+      "soft": 10000,
+      "hard": 47584
+    },
+    "virtual_memory_kbytes": {
+      "soft": 6193152000,
+      "hard": "unlimited"
+    }
+  },
+  "sharedObjects": [
+    "linux-vdso.so.1",
+    "/nix/store/iiymx8j7nlar3gc23lfkcscvr61fng8s-zlib-1.2.11/lib/libz.so.1",
+    "/nix/store/6l4hv5x7gg8pqixad8xzkg5cm6a23zij-libuv-1.26.0/lib/libuv.so.1",
+    "/nix/store/wdj09lkvl8qsd11l6a89avpl999xlhp2-openssl-1.1.1a/lib/libcrypto.so.1.1",
+    "/nix/store/wdj09lkvl8qsd11l6a89avpl999xlhp2-openssl-1.1.1a/lib/libssl.so.1.1",
+    "/nix/store/681354n3k44r8z90m35hm8945vsp95h1-glibc-2.27/lib/libdl.so.2",
+    "/nix/store/681354n3k44r8z90m35hm8945vsp95h1-glibc-2.27/lib/librt.so.1",
+    "/nix/store/hlnxw4k6931bachvg5sv0cyaissimswb-gcc-7.4.0-lib/lib/libstdc++.so.6",
+    "/nix/store/681354n3k44r8z90m35hm8945vsp95h1-glibc-2.27/lib/libm.so.6",
+    "/nix/store/681354n3k44r8z90m35hm8945vsp95h1-glibc-2.27/lib/libgcc_s.so.1",
+    "/nix/store/681354n3k44r8z90m35hm8945vsp95h1-glibc-2.27/lib/libpthread.so.0",
+    "/nix/store/681354n3k44r8z90m35hm8945vsp95h1-glibc-2.27/lib/libc.so.6",
+    "/nix/store/681354n3k44r8z90m35hm8945vsp95h1-glibc-2.27/lib/ld-linux-x86-64.so.2",
+    "/nix/store/681354n3k44r8z90m35hm8945vsp95h1-glibc-2.27/lib/libnsl.so.1"
+  ]
+}

@@ -94,10 +94,8 @@ export const resolveOptions = (opts: {gS: GlobalState, target: Target, node_modu
     const ss = opts.gS.snaphshottedCache()
     const paths_regex: Array<{pattern: string, r: RegExp, targets: string[]}> = []
     const tsconfig = opts.tsconfig
-
-    const prp =
-    tsconfig ? preparedResolvePaths(tsconfig.path, tsconfig.tsconfig.compilerOptions.baseUrl, tsconfig.tsconfig.compilerOptions.paths || {})
-    : preparedResolvePaths("", "", {})
+    const compilerOptions = get_path(tsconfig, "tsconfig", "compilerOptions", {})
+    const prp = preparedResolvePaths(get_path(tsconfig, "path", ""), get_path(compilerOptions, "baseUrl", undefined), get_path(compilerOptions, "path", {}))
     for (const [k, v] of Object.entries(get_path(opts, "tsonfig", "tsconfig", "compilerOptions", "paths", {}))) {
         paths_regex.push({ pattern: k, r: pathRegex(k), targets:  v as string[] })
     }
@@ -424,7 +422,6 @@ export const fileresolver_default: (ro: ResolveOptions, extensions: string[]) =>
         let paths_matches = ro.paths_matches(o.thing.statement)
         paths_matches = ro.paths_matches(o.thing.statement)
         paths_matches = ro.paths_matches(o.thing.statement)
-        console.log("paths_matches", paths_matches)
         for (const v of paths_matches) {
             log(`ttslib ${o.thing.statement} looking at ${v} using require`)
             await require_like(ro, o, v, extensions)

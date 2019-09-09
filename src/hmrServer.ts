@@ -37,7 +37,7 @@ export function createHMRServer(props: ICreateHMRServerProps): HMRServerMethods 
     }
     clients.add(client);
     ws.on("close", () => {
-      clients.delete(client);
+      //
     });
     ws.on("message", function incoming(data) {
       const json = JSON.parse(data as string); // FIXME TYPING as string
