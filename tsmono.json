@@ -1,0 +1,52 @@
+{
+  "package": {
+    "name": "mempack",
+    "scripts": {
+      "dev": "set NODE_ENV=development && node -r ts-node/register --inspect fuse.ts dev",
+      "test": "node -r ts-node/register --inspect fuse.ts test"
+    }
+  },
+  "devDependencies":[
+    "@types/node"
+  ],
+
+  "dependencies": [
+    "weak;types",
+    "fs-extra;types",
+    "json5;types",
+    "chalk",
+    "express;types",
+    "underscore;types",
+    "xxhashjs;types",
+    "bluebird;types",
+    "ttslib",
+    "rimraf;types",
+    "fuse-box",
+    "chokidar",
+    "sane;types",
+    "typescript",
+    "ws;types",
+    "tslint",
+    "underscore;types",
+    "git+https://github.com/azarashd/types-serviceworker"
+  ],
+
+  "tsconfig": {
+    "compilerOptions": {
+      "strict": true,
+      "moduleResolution": "node",
+      "jsx": "react",
+      "jsxFactory": "createElement",
+      "module": "commonjs",
+      "target": "esnext",
+      "sourceMap": true,
+      "importHelpers": true,
+      "emitDecoratorMetadata": true,
+      "experimentalDecorators": true,
+      "outDir":"./dist",
+      "baseUrl": ".",
+      "esModuleInterop": true,
+      "allowSyntheticDefaultImports": true
+    }
+  }
+}
