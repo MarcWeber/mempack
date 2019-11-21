@@ -4,11 +4,12 @@ import express, { Router } from "express";
 import * as fs from "fs";
 import JSON5 from "json5";
 import path from "path";
+import { async_singleton, singleton } from "ttslib/U";
 import ts, { createTextChangeRange, getParsedCommandLineOfConfigFile } from "typescript";
 import * as _ from "underscore"
 import { promisify } from "util";
 import ws from "ws"
-import { defaultResolveImplementation, dependencies, Dependencies, DependencyTree, filesAndHashesOfDependencyTree, ResolveOptions, resolveOptions, Target, TSConfigWithPath } from "./dependencies";
+import { defaultResolveImplementation, dependencies, Dependencies, DependencyTree, filesAndHashesOfDependencyTree, ResolveOptions, resolveOptions, Target, TSConfigWithPath, walkDependencyTree } from "./dependencies";
 import { p } from "./dummy";
 import { fakerequire } from "./fakerequire";
 import { GlobalState } from "./GlobalState";
@@ -22,7 +23,7 @@ import * as Watcher from "./WatcherSane"
 const exists = promisify(fs.exists)
 const stat   = promisify(fs.stat)
 
-// easy to configure set of modules / entry points whith some yet to be defined references
+// easy to configure set of modules / entry points with some yet to be defined references
 export interface ContextUser {
   path?: string, // all paths will be taken relative to this one
   node_modules?: string[],
@@ -104,17 +105,32 @@ export type ChangedFiles = (whiteList: string[]) => Promise<string[]>
 type WithErrors<T> = T & { errors: string[], warnings: string[] }
 export type DependencyTreeChanged<T> = (trees: {new_: WithErrors<T>, last: WithErrors<T>, config: ContextUserResolved}) => void
 
-export const watched_context = (o: {
+export interface WatchedContextI<M extends {}> {
       globalState: GlobalState,
       config: () => ContextUserResolved,
-      update?: DependencyTreeChanged<Dependencies>,
+      update?: DependencyTreeChanged < WatchedContextO & M > ,
       delay_ms?: number,
       target: Target,
-    }) => {
+}
 
+export interface WatchedContextO {
+        resolveOptions: ResolveOptions
+        resolveDependencies: ReturnType<typeof dependencies>["resolveDependencies"],
+        errors: string[],
+        warnings: string[],
+        config: ContextUserResolved,
+}
+
+// watch files and if they change emit events so that updates can be pushed to disk or clients or whatever
+export const watched_context =
+<M>
+(o: WatchedContextI<M & WatchedContextO>, merge: (x: WatchedContextO) => M)
+: WatchedContextO & M => {
   const delay_ms = o.delay_ms ? o.delay_ms : 180;
-
-  // const m = Cache.initCache2(o.globalState.cache, {watcher})
+  const m:
+  (o: WatchedContextO) => WatchedContextO & M
+  // @ts-ignore
+  = (o) =>  merge === undefined ? o : Object.assign(o, merge(o))
 
   const new_run = () => {
 
@@ -149,13 +165,18 @@ export const watched_context = (o: {
         warning: (e) => warnings.push(e),
       })
       const resolveImplementation = defaultResolveImplementation(ro)
-      return {
+
+      return m({
+        resolveOptions: ro,
         resolveDependencies: dependencies(ro, resolveImplementation).resolveDependencies,
         errors,
         warnings,
         config,
-      }
+      })
   }
+
+  // const m = Cache.initCache2(o.globalState.cache, {watcher})
+
   let last_context = new_run()
   let timer: number|undefined
   let new_: ReturnType<typeof new_run>
@@ -236,7 +257,7 @@ export const node_hmr = (globalState: GlobalState, config: () => ContextUserReso
       }
     },
     config,
-  })
+  }, (x) => ({}))
   console.log("r2", r)
   // walk the dependency tree to start watching for changes
   // tslint:disable-next-line: no-floating-promises
@@ -261,12 +282,16 @@ export const node_hmr_default = (globalState: GlobalState, opts: { basedir?: str
 }
 
 export type ClientServiceConfig =
+{
+
+      context: () => ContextUser,
+}
+& (
   {implementation: "modules"} // no hmr, experimental
   |
   { // for development (life update)
       implementation: "service_worker",
       bundledescription_by: "serviceworker" | "socket",
-      context: () => ContextUser,
       socket_port?: number,
 
       corksize?: number,
@@ -285,19 +310,15 @@ export type ClientServiceConfig =
       // no service worker
       implementation: "client",
   }
-  |
-  {
-      // no service worker
-      implementation: "modules",
-  }
+)
 
 export interface ExpressSetup {
-    js_tag_for_page_header: string,
+    js_tag_for_page_header: () => string,
     setup_express: (express: express.Express) => void,
 }
 
-export const client_service_worker: (globalState: GlobalState) => (config: ClientServiceConfig) => ExpressSetup =
-     (gS) => (config) => {
+export const clientCode: (globalState: GlobalState) => (config: ClientServiceConfig) => ExpressSetup =
+     (globalState) => (config) => {
 
     if (config.implementation === "service_worker") {
 
@@ -306,7 +327,7 @@ export const client_service_worker: (globalState: GlobalState) => (config: Clien
       const force_flush_after_ms = config.force_flush_after_ms || 30;
 
       const expressWebSocket = require("express-ws").default;
-      const websocketStream = require("websocket-stream/stream").default;
+      const websocketStream  = require("websocket-stream/stream").default;
 
       const socket_path = "/sw-socket"
 
@@ -315,7 +336,7 @@ export const client_service_worker: (globalState: GlobalState) => (config: Clien
       router.use((req, res, next) => {
          })
       return {
-             js_tag_for_page_header: "",
+             js_tag_for_page_header: () => "",
              setup_express: (app) => {
                expressWebSocket(app, null, {
                  perMessageDeflate: false,
@@ -329,7 +350,7 @@ export const client_service_worker: (globalState: GlobalState) => (config: Clien
                    // TODO: set writableHighWaterMark to low value ?
                    binary: true,
                  });
-                 stream.on("data", (m) => console.log("stream got message", m) )
+                 stream.on("data", (m: any) => console.log("stream got message", m) )
                  stream.on("close", () => console.log("stream closed"))
                })
              },
@@ -338,10 +359,83 @@ export const client_service_worker: (globalState: GlobalState) => (config: Clien
         // browser without service worker
         throw new Error("TODO")
     } else if (config.implementation === "modules") {
+      // could be using normalized dependency tree, for now keep it simple using dependency tree only
+
+      const url_prefix = (x: string) => path.join("module", x)
+
+      let p_context = watched_context({
+        globalState,
+        config: resolveContext(config.context),
+        target: "browser",
+        update: (x) => {
+          p_context = x.new_
+        },
+      }, (x: WatchedContextO) => {
+
+        return {
+          files: async_singleton(async () => {
+            const tree = x.resolveDependencies(x.config.entryPoints)
+            const files: { [key: string]: () => Promise<string> } = {}
+            walkDependencyTree(
+              p_context.config.entryPoints,
+              await tree,
+              (t) => {
+                if ("error" in t) {
+                } else {
+                  const ss = p_context.resolveOptions.ss
+                  // t.filehash
+                  // t.resolved
+                  files["/" + url_prefix(t.path)] = async () =>
+                    p_context.resolveOptions.ss.file_transpiled({ moduleKind: ts.ModuleKind.ESNext, cacheIdOfPath: await ss.hash(t.path) })
+                      .then((x) => x.item.outputText)
+                      .then((x) => {
+                        for (const v of t.resolved) {
+                          if (typeof v.node !== "string") continue;
+                          // const from = `require("${JSON.parse(k).statement}")`
+                          // const to = `require("${url_prefix}/${v.path}")`
+                          const from = `from "${v.import.statement}"`
+                          const to = `from "/${url_prefix(v.node)}"`
+                          console.log("replacing", from, to)
+                          x = x.replace(from, to)
+                        }
+                        return x;
+                      })
+                }
+              },
+            )
+            return files
+          }),
+        }
+      })
+      // const modulesAndContents = async (tree: DependencyTree) => {
+      //   return {
+      //           p_context,
+      //           entryTag: (entry: string) => ,
+      //       }
+      //   }
+
+      return {
+             js_tag_for_page_header: singleton(() => p_context.config.entryPoints.map((entry) => `<script type="module" src="/${url_prefix(entry)}"></script>`).join("\n")),
+             setup_express: (app: express.Router) => {
+               const router = express.Router()
+               router.use(async (req: express.Request, res: express.Response, next) => {
+                 const files = await p_context.files()
+                 const file_promise = files[req.path]
+                 if (file_promise) {
+                   res.type("text/javascript")
+                   res.send(await file_promise())
+                 } else next()
+               })
+               app.use(router)
+             },
+         }
+
         // es6 module like implemenation
-        // TODO, get from comments below ..
-        throw new Error("TODO")
-    } else throw new Error(`unknown implementation ${config.implemeentation}`)
+      // TODO, get from comments below ..
+      throw new Error("TODO")
+    } else
+      // @ts-ignore
+throw new Error(`unknown implementation ${config.implemenation}`)
 }
 
 // // CLIENT SIDE IMPLEMENTATION

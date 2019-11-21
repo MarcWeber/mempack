@@ -73,7 +73,8 @@ self.addEventListener("fetch", (e) => {
     //       }).catch(function(n) {
     //           return console.warn('Couldn\'t serve response for "%s" from cache: %O', e.request.url, n),
 
-}),
-    self.addEventListener("activate", function(e) {
-        console
+})
+// self.addEventListener("activate", function(e) {
+//         console
+// }?
 

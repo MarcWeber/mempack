@@ -70,11 +70,42 @@ There are alternatives such as
 * nodemon (which allow to set your own node command thus you can use node  -r tsconfig-paths/register -r ts-node/register/transpile-only
 
 but eventually you start connecting to databases and more thus restarting from scratch reloading all code probbaly is slower.
+
+special comments
+========================================
+
+// mempack:: embed-dependencies
+-> for serviceworker: embed all dependencies for speed in same file
+see samples/server-client-webworker-update
+
+using own format so that shared dependencies can be served to website without
+additional loading.
+
+
+INTERNAL STRUCTURE
+==================
+dependencies.ts -> only creates dependencies based on files on disk. Duplicates allowed
+
+normalizeddependencies.ts -> from that create dependencies turning files into hash. Hash should be based on hashes of depnedencies.
+Thus if two libraries contain same dependency subtree it should turn into the same ..
  
 EXAMPLES
 ========
-    node hot module reloading:
-    ( cd samples/node-hmr; tp --trace-warnings main.ts; )
+
+    node-hmr: change method.ts, then watch console.log changing its output almost immediately
+    test it by: ( cd samples/node-hmr; tp --trace-warnings main.ts; )
+
+    server-client-modules:
+    * hot reload express server code which was put into its own hmr module ..
+    test it by: ( cd samples/server-client-modules/; tp --trace-warnings main.ts; )
+
+    server-client-webworker-update (TODO)
+    * hot reload express server (like server-client-modules)
+    * hot reload client code via webworker
+
+    Note: because service worker requires being served from https ....
+    test it by: ( cd samples/server-client-webworker-update/; tp --trace-warnings main.ts; )
+
 
 KNOWN BUGS
 =========
@@ -110,23 +141,22 @@ ROADMAP
 [ ] think about depednencies ttslib, move code here ?
 [ ] TranspileLazy -> proper AST based implementation which does not
     manipulate string contents by accident - workarounds
-
+[ ] skip empty modules (eg if a module only contains type definitions)
 
 RESOURCES
 =========
 https://github.com/Microsoft/TypeScript/wiki/Using-the-Compiler-API
 
 
-
 how to use?
 ==========
-TODO
-
 
 TODOs
-=====
+======
 * Talk to nchanged to move fasntanalysis into its own module.
 * https://github.com/callstack/linaria
+* polyfills ? find out what to look for by looking at code ?
+  .text -> Blob.text() like etc ?
 
 
 Thanks to
@@ -141,7 +171,7 @@ How to say thanks?
   (talk to me)
 
 * Support future projects which go beyond TypeScript - talk to me. You can
-  invest from 50 EUR anwards. Thus if you like this and know investors let me
+  invest from 50 EUR onwards. Thus if you like this and know investors let me
   know.
 
 JS/TS still are doing much wrong, eg effect tracking, implicit await/async etc.
@@ -179,3 +209,16 @@ I'd also investigate smarter databases and server/client collaborative shared st
 like drive.google.com but for any kind of documents
 
 Ping me (maybe multiple times in case I miss your mail)
+
+
+MEMO SOCKET
+================
+> 1.200 byte packages might degrease performance on wireless networks thus havign packages smallen or up to 1.2K is ok.
+writeable.cork -> uncorck till reaching such limit (or timeout such as 20ms -> then send)
+How to encode/ decode messages ... ?
+
+
+
+compare with this for performance ?
+===================================
+https://hnpwa.com/

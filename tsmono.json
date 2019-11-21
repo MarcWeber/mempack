@@ -7,7 +7,9 @@
     }
   },
   "devDependencies":[
-    "@types/node"
+    "webpack;types",
+    "@types/node",
+    "puppeteer"
   ],
 
   "dependencies": [
@@ -16,11 +18,12 @@
     "json5;types",
     "chalk",
     "express;types",
+    "websocket-stream",
+    "express-ws;types",
     "underscore;types",
     "xxhashjs;types",
     "bluebird;types",
     "ttslib",
-    "rimraf;types",
     "fuse-box",
     "chokidar",
     "sane;types",

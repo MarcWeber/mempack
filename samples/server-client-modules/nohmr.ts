@@ -5,10 +5,15 @@ import * as Mempack from "../../src/Mempack"
 import * as hmr from "./hmr";
 import * as s from "./server";
 
+const serverConfig = {
+    port: process.env.PORT || 3000,
+    domain: process.env.domain || "localhost",
+}
+
 // global state especially the cache should not be 'reloaded' and kept
 export const globalState = newGlobalState({watch: true})
 
-// setup hot reloading once
+// setup hot reloading of server once
 Mempack.node_hmr(globalState,
     Mempack.resolveContext(() => {
         return {
@@ -23,32 +28,34 @@ Mempack.node_hmr(globalState,
     }),
 )
 
-
 export const clientEntryPoints = ["client.ts"]
 
 const clientConfig: Mempack.ContextUser = {
     entryPoints : clientEntryPoints,
     target: "browser",
 }
-const serverConfig = {
-    port: process.env.PORT || 3000,
-    domain: process.env.domain || "localhost",
-}
 
-export const clientHMR = Mempack.clientCode(globalState, {
-    type: "meta_modules",
-    // watch: false,
-    config: Mempack.resolveContext(() => clientConfig),
-    // bundlepath?: (entry:string) => string
+
+// setup.client, should update on file changes
+export const clientHMR = Mempack.clientCode(globalState)({
+  context: () => ({
+    node_modules: ["node_modules"],
+    target: "browser",
+    entryPoints: clientEntryPoints,
+    tsconfig: "../../tsconfig.json",
+  }),
+  implementation: "modules",
 })
 
 export const app = (() => {
   const app = express();
 
-  clientHMR.serve_via_express(app, {
-    debug_module_graph_path: "/module-graph",
-    debug_transpiled_modules: "/transpiled-modules",
-  })
+  clientHMR.setup_express(app)
+
+  // clientHMR.serve_via_express(app, {
+  //   debug_module_graph_path: "/module-graph",
+  //   debug_transpiled_modules: "/transpiled-modules",
+  // })
 
   // hack, use exports.server to have it updated
   app.get("/", (r, rr) => hmr.serve(r, rr))

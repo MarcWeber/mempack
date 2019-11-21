@@ -18,9 +18,10 @@ export const serve = async (request: express.Request, response: express.Response
     <meta name="viewport" content="width=device-width">
     <script>
     </script>
-    ${await clientHMR.jsfiles_as_html(clientEntryPoints)}
+    ${clientHMR.js_tag_for_page_header()}
   </head>
   <body>
+  See console
   </body>
 </html>
 `)
