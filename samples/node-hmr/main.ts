@@ -1,6 +1,7 @@
 import { newGlobalState } from "../../src/GlobalState";
 import * as Mempack from "../../src/Mempack"
 import {method} from "./method"
+import {ABC} from "./class"
 
 console.log(Object.keys(require.cache))
 
@@ -22,8 +23,11 @@ Mempack.node_hmr(globalState,
 
 let timer;
 
+const instance = new ABC()
+
 const worker = () => {
     method()
+    instance.print()
     timer = setTimeout(worker, 1000)
 }
 if (!timer) worker();

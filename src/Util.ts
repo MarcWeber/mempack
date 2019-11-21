@@ -2,6 +2,7 @@ import chalk from "chalk"
 import fs from "fs"
 import path from "path"
 import xxhash from "xxhashjs"
+import {isClass} from "ttslib/U"
 
 export const strcmp = (a: string, b: string) => {
     return (a < b ? -1 : (a > b ? 1 : 0));
@@ -49,7 +50,18 @@ export const node_hot_reload = (files: string[]) => {
         require.cache[v].old_module = old_module // keep tree of old modules so that if it gets updated again the old modules can be updated, too
         while (old_module) {
             for (const [k, v] of Object.entries(new_module)) {
-                old_module.exports[k] = v
+                console.log("overwriting ", k, old_module.exports[k], old_module.exports[k].prototype);
+                if (isClass(v) && isClass(old_module.exports[k])){
+                    // class case: keep old class but overwrite properties
+                    console.log("class detected");
+                    for (const k2 of Object.getOwnPropertyNames(v.prototype)){
+                        old_module.exports[k].prototype[k2] = v.prototype[k2]
+                    }
+                }
+                else {
+                    // in the non class case just set new function
+                    old_module.exports[k] = v
+                }
             }
             old_module = old_module.old_module
         }
